@@ -8,20 +8,19 @@ LIBS                      :=
 
 INCLUDE_DIR               := include
 SOURCE_DIR                := src
+BINARY_DIR                := bin
 
 DUMMY_FILE_GENERATOR_PROG := dfgen
 DUMMY_FILE_GENERATOR_SRCS := main.c utils.c
-DUMMY_FILE_GENERATOR_SRCS := $(addprefix $(SOURCE_DIR)/,$(DUMMY_FILE_GENERATOR_SRCS))
 DUMMY_FILE_GENERATOR_OBJS := $(patsubst %.c,%.o,$(DUMMY_FILE_GENERATOR_SRCS))
 
-all: $(DUMMY_FILE_GENERATOR_PROG)
+all: build_dummy_file_generator
 
-$(DUMMY_FILE_GENERATOR_PROG): $(DUMMY_FILE_GENERATOR_OBJS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^
-
-$(DUMMY_FILE_GENERATOR_OBJS): $(DUMMY_FILE_GENERATOR_SRCS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(addprefix -I,$(INCLUDE_DIR)) -c $^
+build_dummy_file_generator:
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(addprefix -I,$(INCLUDE_DIR)) -c $(addprefix $(SOURCE_DIR)/,$(DUMMY_FILE_GENERATOR_SRCS))
+	mv ./$(SOURCE_DIR)/*.o ./$(BINARY_DIR)/
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(BINARY_DIR)/$(DUMMY_FILE_GENERATOR_PROG) $(addprefix $(BINARY_DIR)/,$(DUMMY_FILE_GENERATOR_OBJS))
 
 clean:
-	rm -rf $(DUMMY_FILE_GENERATOR_PROG)
-	rm -rf $(DUMMY_FILE_GENERATOR_OBJS)
+	rm -rf $(BINARY_DIR)/$(DUMMY_FILE_GENERATOR_PROG)
+	rm -rf $(BINARY_DIR)/$(DUMMY_FILE_GENERATOR_OBJS)

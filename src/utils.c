@@ -98,7 +98,7 @@ int64_t unit_to_bytes(const char *str)
     int64_t num    = 0;
     char buf[8];
 
-    sscanf(str, "%ld%s", num, buf);
+    sscanf(str, "%ld%s", &num, buf);
 
     if (strcmp(buf, "")  == 0 ||
         strcmp(buf, "B") == 0 ||
