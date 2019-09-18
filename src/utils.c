@@ -95,11 +95,10 @@ int64_t unit_to_bytes(const char *str)
         return -1;
     }
 
-    int64_t bytes  = 0;
     int64_t num    = 0;
     char buf[8];
 
-    sscanf(str, "%lld%s", num, buf);
+    sscanf(str, "%ld%s", num, buf);
 
     if (strcmp(buf, "")  == 0 ||
         strcmp(buf, "B") == 0 ||
@@ -139,5 +138,5 @@ char *bytes_to_unit(int64_t bytes, int format)
         return NULL;
     }
 
-    return unit_format_multiplexor[format];
+    return (*unit_format_multiplexor[format]);
 }
