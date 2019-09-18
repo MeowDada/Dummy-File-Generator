@@ -6,20 +6,20 @@ CPPFLAGS                  :=
 LDFLAGS                   :=
 LIBS                      :=
 
-INCLUDE_PATH              := include
-
+INCLUDE_DIR               := include
+SOURCE_DIR                := src
 
 DUMMY_FILE_GENERATOR_PROG := dfgen
-DUMMY_FILE_GENERATOR_SRCS := main.c
+DUMMY_FILE_GENERATOR_SRCS := $(SOURCE_DIR)/main.c
 DUMMY_FILE_GENERATOR_OBJS := $(patsubst %.c,%.o,$(DUMMY_FILE_GENERATOR_SRCS))
 
 all: %.o $(DUMMY_FILE_GENERATOR_PROG)
 
-$(DUMMY_FILE_GENERATOR_PROG): $(DUMMY_FILE_GENERATOR_OBJS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^
-
 %.o:%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
+
+$(DUMMY_FILE_GENERATOR_PROG): $(DUMMY_FILE_GENERATOR_OBJS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^
 
 clean:
 	rm -rf $(DUMMY_FILE_GENERATOR_PROG)
