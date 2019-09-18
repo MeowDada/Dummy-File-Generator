@@ -104,7 +104,7 @@ static void print_usage(const char *progname)
 
 static void print_info(void)
 {
-    const char *fsize_str = bytes_to_unit(g_param.filesize, UNIT_FORMAT_NORMAL);
+    char *fsize_str = bytes_to_unit(g_param.filesize, UNIT_FORMAT_NORMAL);
 
     const char *info = ""
     "------------------------------------------------------------------------\n"

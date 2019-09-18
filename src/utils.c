@@ -4,6 +4,8 @@
 #include <errno.h>
 #include "utils.h"
 
+typedef char *(*unit_format)(int64_t);
+
 #define BYTES_TO_KILOBYTES (1024LL)
 #define BYTES_TO_MEGABYTES (1048576LL)
 #define BYTES_TO_GIGABYTES (1073741824LL)
@@ -22,7 +24,7 @@ static char *unit_format_normal(int64_t _bytes)
     }
 
     int64_t prec = 1;
-    for (int i = 0; i < UNIT_FORMAT_NORMAL_PRECISION)
+    for (int i = 0; i < UNIT_FORMAT_NORMAL_PRECISION; i++)
         prec *= 10;
 
     if (bytes < BYTES_TO_KILOBYTES) {
@@ -32,19 +34,19 @@ static char *unit_format_normal(int64_t _bytes)
         int64_t val = bytes * prec / BYTES_TO_KILOBYTES;
         int64_t precision = val % prec;
         val /= prec;
-        snprintf(buf, 64, "%lld.%lld KB", val, precision);
+        snprintf(buf, 64, "%ld.%ld KB", val, precision);
     }
     else if (bytes < BYTES_TO_GIGABYTES) {
         int64_t val = bytes * prec / BYTES_TO_MEGABYTES;
         int64_t precision = val % prec;
         val /= prec;
-        snprintf(buf, 64, "%lld.%lld MB", val, precision);
+        snprintf(buf, 64, "%ld.%ld MB", val, precision);
     }
     else {
         int64_t val = bytes * prec / BYTES_TO_GIGABYTES;
         int64_t precison = val % prec;
         val /= prec;
-        snprintf(buf, 64, "%lld.%lld GB", val, precison);
+        snprintf(buf, 64, "%ld.%ld GB", val, precison);
     }
 
     if (sign == -1) {
@@ -74,13 +76,13 @@ static char *unit_format_detail(int64_t _bytes)
     int64_t b     = bytes;
 
     if (sign == 1)
-        snprintf(buf, 128, "%lld GB, %lld MB, %lld KB, %lld bytes", gb, mb, kb, b);
+        snprintf(buf, 128, "%ld GB, %ld MB, %ld KB, %ld bytes", gb, mb, kb, b);
     else if (sign == -1)
-        snprintf(buf, 128, "- %lld GB, %lld MB, %lld KB, %lld bytes", gb, mb, kb, b);
+        snprintf(buf, 128, "- %ld GB, %ld MB, %ld KB, %ld bytes", gb, mb, kb, b);
     return strdup(buf);
 }
 
-static const char *unit_format_multiplexor[] = {
+static unit_format unit_format_multiplexor[] = {
     unit_format_normal,
     unit_format_detail,
 };
