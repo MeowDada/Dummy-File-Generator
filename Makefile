@@ -18,7 +18,7 @@ all: build_dummy_file_generator
 
 build_dummy_file_generator:
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(addprefix -I,$(INCLUDE_DIR)) -c $(addprefix $(SOURCE_DIR)/,$(DUMMY_FILE_GENERATOR_SRCS))
-	mv ./$(SOURCE_DIR)/*.o ./$(BINARY_DIR)/
+	mv *.o ./$(BINARY_DIR)/
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $(BINARY_DIR)/$(DUMMY_FILE_GENERATOR_PROG) $(addprefix $(BINARY_DIR)/,$(DUMMY_FILE_GENERATOR_OBJS))
 
 clean:
