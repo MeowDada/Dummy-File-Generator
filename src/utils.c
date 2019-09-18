@@ -81,8 +81,8 @@ static char *unit_format_detail(int64_t _bytes)
 }
 
 static char *(*unit_format_multiplexor[])(int64_t) = {
-    unit_format_normal,
-    unit_format_detail,
+    [UNIT_FORMAT_NORMAL] = unit_format_normal,
+    [UNIT_FORMAT_DETAIL] = unit_format_detail,
 };
 
 int64_t unit_to_bytes(const char *str)
@@ -136,5 +136,5 @@ char *bytes_to_unit(int64_t bytes, int format)
         return NULL;
     }
 
-    return (*unit_format_multiplexor[format]);
+    return (*unit_format_multiplexor[format])(bytes);
 }
