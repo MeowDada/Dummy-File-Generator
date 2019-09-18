@@ -148,7 +148,7 @@ static int parse_cmds(int argc, char **argv)
 {
     int opt = 0;
 
-    while ((opt = getopt_long(argc, argv, short_options, long_options, NULL)) != 0) {
+    while ((opt = getopt_long(argc, argv, short_options, long_options, NULL)) != -1) {
         switch (opt)
         {
         case 'f':
