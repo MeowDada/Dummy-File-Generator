@@ -113,12 +113,12 @@ static void print_info(void)
     "|[General]                                                             |\n"
     "|    filename:    %-53s|\n"
     "|    filesize:    %-53s|\n"
-    "|    fixed ratio: %3d %%                                                |\n"
+    "|    fixed ratio: %-3d %%                                                |\n"
     "|                                                                      |\n"
     "|[Chunk]                                                               |\n"
-    "|    chunk size:     %-50s|\n"
-    "|    min chunk size: %-50lld|\n"
-    "|    max chunk size: %-50lld|\n"
+    "|    chunk size:     %-18lld bytes                         |\n"
+    "|    min chunk size: %-18lld bytes                         |\n"
+    "|    max chunk size: %-18lld bytes                         |\n"
     "|                                                                      |\n"
     "|[Holes]                                                               |\n"
     "|    generate holes  :     %-44s|\n"
@@ -134,6 +134,7 @@ static void print_info(void)
         g_param.filename,
         fsize_str,
         g_param.fixed_ratio,
+        g_param.chunk_size,
         g_param.chunk_size_min,
         g_param.chunk_size_max,
         g_param.enable_holes ? "enable" : "disable",
