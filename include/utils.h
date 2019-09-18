@@ -13,6 +13,6 @@ enum UNIT_FORMAT {
 };
 
 int64_t unit_to_bytes(const char *);
-const char *bytes_to_unit(int64_t, int format);
+char *bytes_to_unit(int64_t, int format);
 
 #endif /* UTILS_H */

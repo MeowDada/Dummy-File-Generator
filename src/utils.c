@@ -10,7 +10,7 @@
 
 #define UNIT_FORMAT_NORMAL_PRECISION 2
 
-static const char *unit_format_normal(int64_t _bytes)
+static char *unit_format_normal(int64_t _bytes)
 {
     int64_t bytes = _bytes;
     int     sign  = 1;
@@ -54,7 +54,7 @@ static const char *unit_format_normal(int64_t _bytes)
     return strdup(buf);
 }
 
-static const char *unit_format_detail(int64_t _bytes)
+static char *unit_format_detail(int64_t _bytes)
 {
     char buf[128];
 
@@ -129,7 +129,7 @@ int64_t unit_to_bytes(const char *str)
     return 0;
 }
 
-const char *bytes_to_unit(int64_t bytes, int format)
+char *bytes_to_unit(int64_t bytes, int format)
 {
     if (format < 0 || format >= UNIT_FORMAT_LAST) {
         errno = EINVAL;
