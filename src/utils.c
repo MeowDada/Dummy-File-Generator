@@ -80,9 +80,18 @@ static char *unit_format_detail(int64_t _bytes)
     return strdup(buf);
 }
 
+static char *unit_format_bytes_only(int64_t _bytes)
+{
+    char buf[32];
+    snprintf(buf, 32, "%ld bytes", _bytes);
+
+    return strdup(buf);
+}
+
 static char *(*unit_format_multiplexor[])(int64_t) = {
-    [UNIT_FORMAT_NORMAL] = unit_format_normal,
-    [UNIT_FORMAT_DETAIL] = unit_format_detail,
+    [UNIT_FORMAT_NORMAL]     = unit_format_normal,
+    [UNIT_FORMAT_DETAIL]     = unit_format_detail,
+    [UNIT_FORMAT_BYTES_ONLY] = unit_format_bytes_only,
 };
 
 int64_t unit_to_bytes(const char *str)

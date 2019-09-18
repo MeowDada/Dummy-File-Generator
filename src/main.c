@@ -105,20 +105,23 @@ static void print_usage(const char *progname)
 static void print_info(void)
 {
     char *fsize_str = bytes_to_unit(g_param.filesize, UNIT_FORMAT_NORMAL);
+    char *chunksize_str = bytes_to_unit(g_param.chunk_size, UNIT_FORMAT_BYTES_ONLY);
+    char *chunksize_min_str = bytes_to_unit(g_param.chunk_size_min, UNIT_FORMAT_BYTES_ONLY);
+    char *chunksize_max_str = bytes_to_unit(g_param.chunk_size_max, UNIT_FORMAT_BYTES_ONLY);
 
     const char *info = ""
     "------------------------------------------------------------------------\n"
     "|                        [ Parameters Setting ]                        |\n"
     "|----------------------------------------------------------------------|\n"
     "|[General]                                                             |\n"
-    "|    filename:    %-53s|\n"
-    "|    filesize:    %-53s|\n"
-    "|    fixed ratio: %-3d %%                                                |\n"
+    "|    filename:            %-45s|\n"
+    "|    filesize:            %-45s|\n"
+    "|    fixed ratio:         %-3d %%                                       |\n"
     "|                                                                      |\n"
     "|[Chunk]                                                               |\n"
-    "|    chunk size:     %-12lld bytes                                |\n"
-    "|    min chunk size: %-12lld bytes                                |\n"
-    "|    max chunk size: %-12lld bytes                                |\n"
+    "|    chunk size:          %-24s                                |\n"
+    "|    min chunk size:      %-24s                                |\n"
+    "|    max chunk size:      %-24s                                |\n"
     "|                                                                      |\n"
     "|[Holes]                                                               |\n"
     "|    generate holes :     %-44s |\n"
@@ -134,15 +137,18 @@ static void print_info(void)
         g_param.filename,
         fsize_str,
         g_param.fixed_ratio,
-        g_param.chunk_size,
-        g_param.chunk_size_min,
-        g_param.chunk_size_max,
+        chunksize_str,
+        chunksize_min_str,
+        chunksize_max_str,
         g_param.enable_holes ? "enable" : "disable",
         g_param.num_holes,
         g_param.holes_size
         );
 
     free(fsize_str);
+    free(chunksize_str);
+    free(chunksize_min_str);
+    free(chunksize_max_str);
 }
 
 static int parse_cmds(int argc, char **argv)
