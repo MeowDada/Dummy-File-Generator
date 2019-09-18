@@ -4,7 +4,7 @@
 #include <errno.h>
 #include "utils.h"
 
-typedef char *unit_format(int64_t);
+typedef char unit_format(int64_t);
 
 #define BYTES_TO_KILOBYTES (1024LL)
 #define BYTES_TO_MEGABYTES (1048576LL)
@@ -82,7 +82,7 @@ static char *unit_format_detail(int64_t _bytes)
     return strdup(buf);
 }
 
-static unit_format unit_format_multiplexor[] = {
+static unit_format *unit_format_multiplexor[] = {
     &unit_format_normal,
     &unit_format_detail,
 };
