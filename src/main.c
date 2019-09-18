@@ -119,9 +119,9 @@ static void print_info(void)
     "|    fixed ratio:         %-3d %%                                        |\n"
     "|                                                                      |\n"
     "|[Chunk]                                                               |\n"
-    "|    chunk size:          %-24s                       |\n"
-    "|    min chunk size:      %-24s                       |\n"
-    "|    max chunk size:      %-24s                       |\n"
+    "|    chunk size:          %-24s                     |\n"
+    "|    min chunk size:      %-24s                     |\n"
+    "|    max chunk size:      %-24s                     |\n"
     "|                                                                      |\n"
     "|[Holes]                                                               |\n"
     "|    generate holes :     %-44s |\n"
@@ -228,13 +228,63 @@ static int parse_cmds(int argc, char **argv)
     return 0;
 }
 
+static int check_parameters(void)
+{
+    int error = 0;
+
+    if (!g_param.filename) {
+        fprintf(stderr, "[ERROR]: must set filename with -f <filename>\n");
+        error++;
+    }
+
+    if (g_param.filesize <= 0) {
+        fprintf(stderr, "[ERROR]: must set filesize >= 0 bytes with -s <size>\n");
+        error++;
+    }
+
+    if (g_param.fixed_ratio < 0 || g_param.fixed_ratio > 100) {
+        fprintf(stderr, "[ERROR]: fixed ratio must be a integer in range [ 0 - 100 ]\n");
+        error++;
+    }
+
+    if (g_param.non_fixed_ratio < 0 || g_param.non_fixed_ratio > 100) {
+        fprintf(stderr, "[ERROR]: invalid non fixed ratio\n");
+        error++;
+    }
+
+    if (g_param.chunk_size_max < g_param.chunk_size_min) {
+        fprintf(stderr, "[ERROR]: max chunk size should always greater or equal to min chunk size\n");
+        error++;
+    }
+
+    if (g_param.enable_holes && g_param.holes_size <= 0) {
+        fprintf(stderr, "[ERROR]: total size of the hole should always greater than 0 bytes\n");
+        error++;
+    }
+
+    if (g_param.enable_holes && g_param.num_holes <= 0) {
+        fprintf(stderr, "[ERROR]: number of holes should greater than 0 if enable generating holes mode\n");
+        error++;
+    }
+
+    return error;
+}
+
 int main(int argc, char **argv)
 {
     if (parse_cmds(argc, argv)) {
-        fprintf(stderr, "Some errors occur when parsing commands\n");
-        fprintf(stderr, "Exiting the program...\n");
+        fprintf(stderr, "[WARN ]: Some errors occur when parsing commands\n");
+        fprintf(stderr, "[WARN ]: the program...\n");
         return -1;
     }
+
+    int num_err = 0;
+
+    if ((num_err = check_parameters()) != 0) {
+        fprintf(stderr, "[WARN ]: Total %d errors occur\n", num_err);
+        fprintf(stderr, "[WARN ]: Exiting the program...\n");
+        return -1;
+    } 
 
     if (!g_param.quiet)
         print_info();
