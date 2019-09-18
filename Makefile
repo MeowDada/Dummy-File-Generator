@@ -10,7 +10,7 @@ INCLUDE_DIR               := include
 SOURCE_DIR                := src
 
 DUMMY_FILE_GENERATOR_PROG := dfgen
-DUMMY_FILE_GENERATOR_SRCS := main.c
+DUMMY_FILE_GENERATOR_SRCS := main.c utils.c
 DUMMY_FILE_GENERATOR_SRCS := $(addprefix $(SOURCE_DIR)/,$(DUMMY_FILE_GENERATOR_SRCS))
 DUMMY_FILE_GENERATOR_OBJS := $(patsubst %.c,%.o,$(DUMMY_FILE_GENERATOR_SRCS))
 

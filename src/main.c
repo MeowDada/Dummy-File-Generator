@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include "utils.h"
+
+#define DEFAULT_FIXED_RATIO 20
+#define DEFAULT_CHUNK_SIZE  65536 /* 64 KB */
 
 const struct option long_options[] = {
     {"file",           required_argument, NULL, 'f'},
@@ -17,6 +21,38 @@ const struct option long_options[] = {
     {"help",           no_argument,       NULL, 'h'},
 };
 const static char *short_options = "f:s:r:S:M:m:qHO:N:h";
+
+typedef struct param_t {
+    char    *filename;
+    int64_t  filesize;
+    int      fixed_ratio;
+    int      non_fixed_ratio;
+    int64_t  fixed_part_size;
+    int64_t  non_fixed_part_size;
+    int64_t  chunk_size;
+    int64_t  chunk_size_min;
+    int64_t  chunk_size_max;
+    int      quiet;
+    int      enable_holes;
+    int      num_holes;
+    int64_t  holes_size;
+} param_t;
+
+static param_t g_param = {
+    .filename               = NULL,
+    .filesize               = 0,
+    .fixed_ratio            = DEFAULT_FIXED_RATIO,
+    .non_fixed_ratio        = 100 - DEFAULT_FIXED_RATIO,
+    .fixed_part_size        = 0,
+    .non_fixed_part_size    = 0,
+    .chunk_size             = DEFAULT_CHUNK_SIZE,
+    .chunk_size_min         = DEFAULT_CHUNK_SIZE,
+    .chunk_size_max         = DEFAULT_CHUNK_SIZE,
+    .quiet                  = 0,
+    .enable_holes           = 0,
+    .num_holes              = 0,
+    .holes_size             = 0,
+};
 
 static void print_usage(const char *progname)
 {
@@ -66,6 +102,48 @@ static void print_usage(const char *progname)
     fprintf(stdout, usage, progname, progname);
 }
 
+static void print_info(void)
+{
+    const char *fsize_str = bytes_to_unit(g_param.filesize, UNIT_FORMAT_NORMAL);
+
+    const char *info = ""
+    "------------------------------------------------------------------------\n"
+    "|========================[ Parameters Setting ]========================|\n"
+    "|----------------------------------------------------------------------|\n"
+    "|[General]                                                             |\n"
+    "|    filename:    %-53s|\n"
+    "|    filesize:    %-53s|\n"
+    "|    fixed ratio: %3d %%                                                |\n"
+    "|                                                                      |\n"
+    "|[Chunk]                                                               |\n"
+    "|    chunk size:     %-50s|\n"
+    "|    min chunk size: %-50lld|\n"
+    "|    max chunk size: %-50lld|\n"
+    "|                                                                      |\n"
+    "|[Holes]                                                               |\n"
+    "|    generate holes  :     %-44s|\n"
+    "|    number of holes :     %-44lld|\n"
+    "|    total size of holes : %-44lld|\n"
+    "|                                                                      |\n"
+    "|[Others]                                                              |\n"
+    "|                                                                      |\n"
+    "------------------------------------------------------------------------\n"
+    "";
+
+    fprintf(stdout, info,
+        g_param.filename,
+        fsize_str,
+        g_param.fixed_ratio,
+        g_param.chunk_size_min,
+        g_param.chunk_size_max,
+        g_param.enable_holes ? "enable" : "disable",
+        g_param.num_holes,
+        g_param.holes_size
+        );
+
+    free(fsize_str);
+}
+
 static int parse_cmds(int argc, char **argv)
 {
     int opt = 0;
@@ -74,18 +152,63 @@ static int parse_cmds(int argc, char **argv)
         switch (opt)
         {
         case 'f':
+            g_param.filename = strdup(optarg);
             break;
         case 's':
+            g_param.filesize = unit_to_bytes(optarg);
+            if (g_param.filesize <= 0) {
+                fprintf(stderr, "filesize must be larger than 0 bytes!\n");
+                return -1;
+            }
+            break;
+        case 'r':
+            g_param.fixed_ratio = atoi(optarg);
+            if (g_param.fixed_ratio < 0 || g_param.fixed_ratio > 100) {
+                fprintf(stderr, "fixed ratio should be a integer in range [ 0 - 100 ]\n");
+                return -1;
+            }
+            g_param.non_fixed_ratio = 100 - g_param.fixed_ratio;
             break;
         case 'S':
+            g_param.chunk_size = unit_to_bytes(optarg);
+            if (g_param.chunk_size <= 0) {
+                fprintf(stderr, "chunksize must be larget than 0 bytes\n");
+                return -1;
+            }
             break;
         case 'M':
+            g_param.chunk_size_max = unit_to_bytes(optarg);
+            if (g_param.chunk_size_max <= 0) {
+                fprintf(stderr, "max chunk size must be larger than 0 bytes\n");
+                return -1;
+            }
             break;
         case 'm':
+            g_param.chunk_size_min = unit_to_bytes(optarg);
+            if (g_param.chunk_size_min <= 0) {
+                fprintf(stderr, "min chunk size must be larger than 0 bytes\n");
+                return -1;
+            }
             break;
         case 'q':
+            g_param.quiet = 1;
             break;
         case 'H':
+            g_param.enable_holes = 1;
+            break;
+        case 'O':
+            g_param.holes_size = unit_to_bytes(optarg);
+            if (g_param.holes_size <= 0) {
+                fprintf(stderr, "total size of the holes must be larger than 0 bytes\n");
+                return -1;
+            }
+            break;
+        case 'N':
+            g_param.num_holes = atoi(optarg);
+            if (g_param.num_holes <= 0) {
+                fprintf(stderr, "total num of holes should be larger than 0\n");
+                return -1;
+            }
             break;
         case 'h':
         case '?':
@@ -105,6 +228,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "Exiting the program...\n");
         return -1;
     }
+
+    if (!g_param.quiet)
+        print_info();
 
     return 0;
 }
