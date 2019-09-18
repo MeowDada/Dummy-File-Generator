@@ -138,5 +138,5 @@ char *bytes_to_unit(int64_t bytes, int format)
         return NULL;
     }
 
-    return (*unit_format_multiplexor[format]);
+    return unit_format_multiplexor[format];
 }
