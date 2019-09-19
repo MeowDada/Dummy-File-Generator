@@ -121,78 +121,119 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
     int     num_holes_non_fixed  = num_holes - num_holes_fixed;
 
     /* determine where to append holes */
-    int     *holes_index  = calloc(num_holes_fixed, sizeof(int64_t));
-    int      duplicate    = 0;
-    int      chunk_idx    = -1;
+    if (num_holes_fixed > 0) {
+        int     *holes_index  = calloc(num_holes_fixed, sizeof(int64_t));
+        int      duplicate    = 0;
+        int      chunk_idx    = -1;
 
-    memset(holes_index, -1, num_holes_fixed*sizeof(int64_t));
+        memset(holes_index, -1, num_holes_fixed*sizeof(int64_t));
 
-    /* setup holes index */
-    for (int i = 0 ; i < num_holes_fixed; i++) {
-        duplicate = 0;
-        chunk_idx = rand() % num_fixed_chunk;
-        for (int j = 0 ; j < i ; j++) {
-            if (chunk_idx == holes_index[j]) {
-                i--;
-                duplicate = 1;
-                break;
+        /* setup holes index */
+        for (int i = 0 ; i < num_holes_fixed; i++) {
+            duplicate = 0;
+            chunk_idx = rand() % num_fixed_chunk;
+            for (int j = 0 ; j < i ; j++) {
+                if (chunk_idx == holes_index[j]) {
+                    i--;
+                    duplicate = 1;
+                    break;
+                }
+            }
+            if (!duplicate) {
+                holes_index[i] = chunk_idx;
             }
         }
-        if (!duplicate) {
-            holes_index[i] = chunk_idx;
+        qsort(holes_index, sizeof(int64_t), num_holes_fixed, cmp_int);
+
+        /* copy fixed part and generating holes */
+        int64_t copied_fixed_bytes = 0;
+        int     fixed_hole_idx     = 0;
+        char    buffer[chunksize];
+        int64_t hole_size          = 0;
+
+        for (int i = 0 ; i < num_fixed_chunk; i++) {
+            fread(buffer, 1, chunksize, src);
+            fwrite(buffer, 1, chunksize, tar);
+            if (holes_index[fixed_hole_idx] == i) {
+                if (fixed_hole_idx != num_holes_fixed-1)
+                    hole_size = fixed_holes_size / num_holes_fixed;
+                else
+                    hole_size = fixed_holes_size / num_holes_fixed + (fixed_holes_size%num_holes_fixed);
+                fseek(tar, hole_size, SEEK_CUR);
+            }
+            copied_fixed_bytes += chunksize;
+        }
+        fread(buffer, 1, param->fixed_part_size - copied_fixed_bytes, src);
+        fwrite(buffer, 1, param->fixed_part_size - copied_fixed_bytes, tar);
+        free(holes_index);
+    }
+    else {
+        int64_t processed_bytes = 0;
+        int64_t bytes_to_write  = param->fixed_part_size;
+        int64_t written_bytes   = 0;
+        int64_t read_bytes      = 0;
+        int64_t available_bytes = 0;
+        char    buffer[chunksize];
+
+        while (processed_bytes < bytes_to_write) {
+            available_bytes = min(chunksize, bytes_to_write-processed_bytes);
+            read_bytes = fread(buffer, 1, available_bytes, src);
+            if (available_bytes != read_bytes)
+                fprintf(stderr, "[WARN ]: should read %ld bytes, but read only %ld bytes\n", available_bytes, read_bytes);
+            written_bytes = fwrite(buffer, 1, read_bytes, tar);
+            if (read_bytes != written_bytes)
+                fprintf(stderr, "[WARN ]: should write %ld bytes, but wrote only %ld bytes instead\n", read_bytes, written_bytes);
+            processed_bytes += written_bytes;
         }
     }
-    qsort(holes_index, sizeof(int64_t), num_holes_fixed, cmp_int);
-
-    /* copy fixed part and generating holes */
-    int64_t copied_fixed_bytes = 0;
-    int     fixed_hole_idx     = 0;
-    char    buffer[chunksize];
-    int64_t hole_size          = 0;
-
-    for (int i = 0 ; i < num_fixed_chunk; i++) {
-        fread(buffer, 1, chunksize, src);
-        fwrite(buffer, 1, chunksize, tar);
-        if (holes_index[fixed_hole_idx] == i) {
-            if (fixed_hole_idx != num_holes_fixed-1)
-                hole_size = fixed_holes_size / num_holes_fixed;
-            else
-                hole_size = fixed_holes_size / num_holes_fixed + (fixed_holes_size%num_holes_fixed);
-            fseek(tar, hole_size, SEEK_CUR);
-        }
-        copied_fixed_bytes += chunksize;
-    }
-    fread(buffer, 1, param->fixed_part_size - copied_fixed_bytes, src);
-    fwrite(buffer, 1, param->fixed_part_size - copied_fixed_bytes, tar);
 
     /* copy non fixed part and generating holes */
-    int64_t num_holes_gen = 0;
-    int64_t non_fixed_hole_len = non_fixed_holes_size / num_holes_non_fixed;
-    int64_t last_hole_size     = non_fixed_holes_size - non_fixed_hole_len * num_holes_non_fixed;
-    int64_t copied_non_fixed_bytes = 0;
-    int64_t non_fixed_bytes_to_copy = param->non_fixed_part_size;
-    int64_t min_chunksize = param->chunk_size_min;
-    int64_t max_chunksize = param->chunk_size_max;
-    int64_t size = 0;
-    int64_t available_bytes = 0;
-    char    buffer2[max_chunksize];
+    if (num_holes_non_fixed > 0) {
+        int64_t num_holes_gen = 0;
+        int64_t non_fixed_hole_len = non_fixed_holes_size / num_holes_non_fixed;
+        int64_t last_hole_size     = non_fixed_holes_size - non_fixed_hole_len * num_holes_non_fixed;
+        int64_t copied_non_fixed_bytes = 0;
+        int64_t non_fixed_bytes_to_copy = param->non_fixed_part_size;
+        int64_t min_chunksize = param->chunk_size_min;
+        int64_t max_chunksize = param->chunk_size_max;
+        int64_t size = 0;
+        int64_t available_bytes = 0;
+        char    buffer2[max_chunksize];
 
-    while (copied_non_fixed_bytes < non_fixed_bytes_to_copy) {
-        if (num_holes_gen < num_holes_non_fixed) {
-            if (num_holes_gen == num_holes_non_fixed-1)
-                fseek(tar, non_fixed_hole_len, SEEK_CUR);
-            else
-                fseek(tar, last_hole_size, SEEK_CUR);
-            num_holes_gen++;
+        while (copied_non_fixed_bytes < non_fixed_bytes_to_copy) {
+            if (num_holes_gen < num_holes_non_fixed) {
+                if (num_holes_gen == num_holes_non_fixed-1)
+                    fseek(tar, non_fixed_hole_len, SEEK_CUR);
+                else
+                    fseek(tar, last_hole_size, SEEK_CUR);
+                num_holes_gen++;
+            }
+            size = random_chunk_size(min_chunksize, max_chunksize);
+            available_bytes = min(non_fixed_bytes_to_copy - copied_non_fixed_bytes, size);
+            fread(buffer2, 1, available_bytes, src);
+            fwrite(buffer2, 1, available_bytes, tar);
+            copied_non_fixed_bytes += available_bytes;
         }
-        size = random_chunk_size(min_chunksize, max_chunksize);
-        available_bytes = min(non_fixed_bytes_to_copy - copied_non_fixed_bytes, size);
-        fread(buffer2, 1, available_bytes, src);
-        fwrite(buffer2, 1, available_bytes, tar);
-        copied_non_fixed_bytes += available_bytes;
     }
-
-    free(holes_index);
+    else {
+        int64_t processed_bytes = 0;
+        int64_t bytes_to_write  = 0;
+        int64_t written_bytes   = 0;
+        int64_t read_bytes      = 0;
+        int64_t available_bytes = 0;
+        char    buffer[chunksize];
+        
+        while (processed_bytes < bytes_to_write) {
+            available_bytes = min(chunksize, bytes_to_write-processed_bytes);
+            read_bytes = fread(buffer, 1, available_bytes, src);
+            if (available_bytes != read_bytes)
+                fprintf(stderr, "[WARN ]: should read %ld bytes, but read only %ld bytes\n", available_bytes, read_bytes);
+            written_bytes = fwrite(buffer, 1, read_bytes, tar);
+            if (read_bytes != written_bytes)
+                fprintf(stderr, "[WARN ]: should write %ld bytes, but wrote only %ld bytes instead\n", read_bytes, written_bytes);
+            processed_bytes += written_bytes;
+        }
+    }
 
     return 0;
 }
@@ -279,6 +320,11 @@ cleanup:
         fclose(fp);
     if (temp_fp)
         fclose(temp_fp);
+
+    if (remove(temp_file)) {
+        fprintf(stderr, "[ERROR]: failed to remove temp file: %s\n", strerror(errno));
+        error = -1;
+    }
     
     return error;
 }
