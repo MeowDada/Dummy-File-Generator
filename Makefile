@@ -11,7 +11,7 @@ SOURCE_DIR                := src
 BINARY_DIR                := bin
 
 DUMMY_FILE_GENERATOR_PROG := dfgen
-DUMMY_FILE_GENERATOR_SRCS := main.c utils.c
+DUMMY_FILE_GENERATOR_SRCS := main.c utils.c chunk.c genfile.c
 DUMMY_FILE_GENERATOR_OBJS := $(patsubst %.c,%.o,$(DUMMY_FILE_GENERATOR_SRCS))
 
 all: build_dummy_file_generator

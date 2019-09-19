@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include "genfile.h"
 #include "utils.h"
 
 #define DEFAULT_FIXED_RATIO 20
@@ -21,22 +22,6 @@ const struct option long_options[] = {
     {"help",           no_argument,       NULL, 'h'},
 };
 const static char *short_options = "f:s:r:S:M:m:qHO:N:h";
-
-typedef struct param_t {
-    char    *filename;
-    int64_t  filesize;
-    int      fixed_ratio;
-    int      non_fixed_ratio;
-    int64_t  fixed_part_size;
-    int64_t  non_fixed_part_size;
-    int64_t  chunk_size;
-    int64_t  chunk_size_min;
-    int64_t  chunk_size_max;
-    int      quiet;
-    int      enable_holes;
-    int      num_holes;
-    int64_t  holes_size;
-} param_t;
 
 static param_t g_param = {
     .filename               = NULL,
@@ -252,6 +237,11 @@ static int check_parameters(void)
         error++;
     }
 
+    if (g_param.filesize < g_param.chunk_size) {
+        fprintf(stderr, "[ERROR]: chunk size should always smaller than the file size\n");
+        error++;
+    }
+
     if (g_param.chunk_size_max < g_param.chunk_size_min) {
         fprintf(stderr, "[ERROR]: max chunk size should always greater or equal to min chunk size\n");
         error++;
@@ -267,14 +257,37 @@ static int check_parameters(void)
         error++;
     }
 
+    if (g_param.enable_holes && g_param.num_holes > g_param.holes_size) {
+        fprintf(stderr, "[ERROR]: number of the holes should always smaller than the total size of the holes\n");
+        error++;
+    }
+
     return error;
+}
+
+static int prepare_generating_file(void)
+{
+    int64_t filesize = g_param.filesize;
+    g_param.fixed_part_size     = filesize * g_param.fixed_ratio / 100;
+    g_param.non_fixed_part_size = filesize - g_param.fixed_part_size;
+
+    if (g_param.enable_holes) {
+        if (g_param.non_fixed_part_size < g_param.holes_size) {
+            fprintf(stderr, "[ERROR]: non-fixed part size should always greater than the sum of the holes' size");
+            return -1;
+        }
+        g_param.non_fixed_part_size -= g_param.holes_size;
+    }
 }
 
 int main(int argc, char **argv)
 {
+    /* used for generating random content */
+    srand(time(NULL));
+
     if (parse_cmds(argc, argv)) {
         fprintf(stderr, "[WARN ]: Some errors occur when parsing commands\n");
-        fprintf(stderr, "[WARN ]: the program...\n");
+        fprintf(stderr, "[WARN ]: Exiting the program...\n");
         return -1;
     }
 
@@ -284,10 +297,22 @@ int main(int argc, char **argv)
         fprintf(stderr, "[WARN ]: Total %d errors occur\n", num_err);
         fprintf(stderr, "[WARN ]: Exiting the program...\n");
         return -1;
-    } 
+    }
+
+    if (prepare_generating_file()) {
+        fprintf(stderr, "[WARN ]: Detect some invalid setting\n");
+        fprintf(stderr, "[WARN ]: Exiting the program...\n");
+        return -1;
+    }
 
     if (!g_param.quiet)
         print_info();
+
+    if (generate_file(&g_param)) {
+        fprintf(stderr, "[WARN ]: Detect some error when generating file\n");
+        fprintf(stderr, "[WARN ]: Exiting the program...\n");
+        return -1;
+    }
 
     return 0;
 }

@@ -12,7 +12,7 @@ enum UNIT_FORMAT {
     UNIT_FORMAT_LAST,
 };
 
-int64_t unit_to_bytes(const char *);
-char *bytes_to_unit(int64_t, int format);
+extern int64_t  unit_to_bytes(const char *);
+extern char    *bytes_to_unit(int64_t, int format);
 
-#endif /* UTILS_H */
+#endif /* UTILS_H */ 
