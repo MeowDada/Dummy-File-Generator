@@ -14,6 +14,8 @@ static int cmp_int(const void *lhs, const void *rhs)
 
 static inline int64_t random_chunk_size(int64_t min, int64_t max)
 {
+    if (max == min)
+        return max;
     return min + (rand() % (max-min));
 }
 
@@ -24,6 +26,9 @@ static int populate_data_for_fixed_part(FILE *fp, param_t *param)
         fprintf(stderr, "[ERROR]: populate_data_for_fixed_part: %s\n", strerror(errno));
         return -1;
     }
+
+    if (param->fixed_part_size <= 0)
+        return;
 
     int64_t processed_bytes = 0;
     int64_t bytes_to_write  = param->fixed_part_size;
@@ -57,6 +62,9 @@ static int populate_data_for_non_fixed_part(FILE *fp, param_t *param)
         fprintf(stderr, "[ERROR]: populate_data_for_non_fixed_part: %s\n", strerror(errno));
         return -1;
     }
+
+    if (param->non_fixed_part_size <= 0)
+        return 0;
 
     int64_t processed_bytes = 0;
     int64_t bytes_to_write  = param->non_fixed_part_size;
