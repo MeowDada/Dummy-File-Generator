@@ -155,7 +155,7 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
         for (int i = 0 ; i < num_fixed_chunk; i++) {
             fread(buffer, 1, chunksize, src);
             fwrite(buffer, 1, chunksize, tar);
-            if (holes_index[fixed_hole_idx] == i) {
+            if (fixed_hole_idx < num_holes_fixed && holes_index[fixed_hole_idx] == i) {
                 if (fixed_hole_idx != num_holes_fixed-1)
                     fseek(tar, hole_size, SEEK_CUR);
                 else
@@ -199,11 +199,13 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
         int64_t max_chunksize = param->chunk_size_max;
         int64_t size = 0;
         int64_t available_bytes = 0;
+        int64_t read_bytes      = 0;
+        int64_t written_bytes   = 0;
         char    buffer2[max_chunksize];
 
         while (copied_non_fixed_bytes < non_fixed_bytes_to_copy) {
             if (num_holes_gen < num_holes_non_fixed) {
-                if (num_holes_gen == num_holes_non_fixed-1)
+                if (num_holes_gen != num_holes_non_fixed-1)
                     fseek(tar, non_fixed_hole_len, SEEK_CUR);
                 else
                     fseek(tar, last_hole_size, SEEK_CUR);
@@ -211,9 +213,13 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
             }
             size = random_chunk_size(min_chunksize, max_chunksize);
             available_bytes = min(non_fixed_bytes_to_copy - copied_non_fixed_bytes, size);
-            fread(buffer2, 1, available_bytes, src);
-            fwrite(buffer2, 1, available_bytes, tar);
-            copied_non_fixed_bytes += available_bytes;
+            read_bytes = fread(buffer2, 1, available_bytes, src);
+            if (read_bytes != available_bytes)
+                fprintf(stderr, "[WARN ]: should read %ld bytes, but only read %ld bytes\n", available_bytes, read_bytes);
+            written_bytes = fwrite(buffer2, 1, read_bytes, tar);
+            if (written_bytes != read_bytes)
+                fprintf(stderr, "[WARN ]: should write %ld bytes, but only wrote %ld bytes instead\n", read_bytes, written_bytes);
+            copied_non_fixed_bytes += written_bytes;
         }
     }
     else {
