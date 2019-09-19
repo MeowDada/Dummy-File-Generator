@@ -105,7 +105,6 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
 
     int64_t chunksize            = param->chunk_size;
     int64_t fixed_ratio          = param->fixed_ratio;
-    int64_t non_fixed_ratio      = param->non_fixed_ratio;
     int64_t fixed_holes_size     = param->holes_size * fixed_ratio / 100;
     int64_t non_fixed_holes_size = param->holes_size - fixed_holes_size;
     int     num_fixed_chunk      = param->fixed_part_size / chunksize;
@@ -115,7 +114,6 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
 
     /* determine where to append holes */
     int     *holes_index  = calloc(num_holes_fixed, sizeof(int64_t));
-    int64_t  used_offset  = 0;
     int      duplicate    = 0;
     int      chunk_idx    = -1;
 

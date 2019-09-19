@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <getopt.h>
 #include "genfile.h"
 #include "utils.h"
@@ -278,6 +279,8 @@ static int prepare_generating_file(void)
         }
         g_param.non_fixed_part_size -= g_param.holes_size;
     }
+
+    return 0;
 }
 
 int main(int argc, char **argv)
