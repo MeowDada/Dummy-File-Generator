@@ -153,7 +153,7 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
         int     fixed_hole_idx     = 0;
         char    buffer[chunksize];
         int64_t hole_size          = fixed_holes_size / num_holes_fixed;
-        int64_t last_hole_size     = fixed_holes_size - hole_size * num_holes_fixed;
+        int64_t last_hole_size     = fixed_holes_size - hole_size * num_holes_fixed + hole_size;
 
         for (int i = 0 ; i < num_fixed_chunk; i++) {
             fread(buffer, 1, chunksize, src);
@@ -195,7 +195,7 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
     if (num_holes_non_fixed > 0) {
         int64_t num_holes_gen = 0;
         int64_t non_fixed_hole_len = non_fixed_holes_size / num_holes_non_fixed;
-        int64_t last_hole_size     = non_fixed_holes_size - non_fixed_hole_len * num_holes_non_fixed;
+        int64_t last_hole_size     = non_fixed_holes_size - non_fixed_hole_len * num_holes_non_fixed + non_fixed_hole_len;
         int64_t copied_non_fixed_bytes = 0;
         int64_t non_fixed_bytes_to_copy = param->non_fixed_part_size;
         int64_t min_chunksize = param->chunk_size_min;
