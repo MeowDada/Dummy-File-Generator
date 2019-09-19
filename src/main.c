@@ -91,9 +91,12 @@ static void print_usage(const char *progname)
 static void print_info(void)
 {
     char *fsize_str = bytes_to_unit(g_param.filesize, UNIT_FORMAT_NORMAL);
+    char *fixed_part_size_str = bytes_to_unit(g_param.fixed_part_size, UNIT_FORMAT_NORMAL);
+    char *non_fixed_part_size_str = bytes_to_unit(g_param.non_fixed_part_size, UNIT_FORMAT_NORMAL);
     char *chunksize_str = bytes_to_unit(g_param.chunk_size, UNIT_FORMAT_BYTES_ONLY);
     char *chunksize_min_str = bytes_to_unit(g_param.chunk_size_min, UNIT_FORMAT_BYTES_ONLY);
     char *chunksize_max_str = bytes_to_unit(g_param.chunk_size_max, UNIT_FORMAT_BYTES_ONLY);
+    char *total_holes_size_str = bytes_to_unit(g_param.holes_size, UNIT_FORMAT_BYTES_ONLY);
 
     const char *info = ""
     "------------------------------------------------------------------------\n"
@@ -103,6 +106,8 @@ static void print_info(void)
     "|    filename:            %-45s|\n"
     "|    filesize:            %-45s|\n"
     "|    fixed ratio:         %-3d %%                                        |\n"
+    "|    fixed part size:     %-45s|\n"
+    "|    non fixed part size: %-45s|\n"
     "|                                                                      |\n"
     "|[Chunk]                                                               |\n"
     "|    chunk size:          %-24s                     |\n"
@@ -112,7 +117,7 @@ static void print_info(void)
     "|[Holes]                                                               |\n"
     "|    generate holes :     %-44s |\n"
     "|    number of holes:     %-44lld |\n"
-    "|    total size of holes: %-44lld |\n"
+    "|    total size of holes: %-44s |\n"
     "|                                                                      |\n"
     "|[Others]                                                              |\n"
     "|                                                                      |\n"
@@ -122,19 +127,24 @@ static void print_info(void)
     fprintf(stdout, info,
         g_param.filename,
         fsize_str,
+        fixed_part_size_str,
+        non_fixed_part_size_str,
         g_param.fixed_ratio,
         chunksize_str,
         chunksize_min_str,
         chunksize_max_str,
         g_param.enable_holes ? "enable" : "disable",
         g_param.num_holes,
-        g_param.holes_size
+        total_holes_size_str
         );
 
     free(fsize_str);
+    free(fixed_part_size_str);
+    free(non_fixed_part_size_str);
     free(chunksize_str);
     free(chunksize_min_str);
     free(chunksize_max_str);
+    free(total_holes_size_str);
 }
 
 static int parse_cmds(int argc, char **argv)
@@ -271,14 +281,6 @@ static int prepare_generating_file(void)
     int64_t filesize = g_param.filesize;
     g_param.fixed_part_size     = filesize * g_param.fixed_ratio / 100;
     g_param.non_fixed_part_size = filesize - g_param.fixed_part_size;
-
-    if (g_param.enable_holes) {
-        if (g_param.non_fixed_part_size < g_param.holes_size) {
-            fprintf(stderr, "[ERROR]: non-fixed part size should always greater than the sum of the holes' size");
-            return -1;
-        }
-        g_param.non_fixed_part_size -= g_param.holes_size;
-    }
 
     return 0;
 }
