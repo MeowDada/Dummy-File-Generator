@@ -122,11 +122,11 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
 
     /* determine where to append holes */
     if (num_holes_fixed > 0) {
-        int     *holes_index  = calloc(num_holes_fixed, sizeof(int64_t));
+        int     *holes_index  = calloc(num_holes_fixed, sizeof(int));
         int      duplicate    = 0;
         int      chunk_idx    = -1;
 
-        memset(holes_index, -1, num_holes_fixed*sizeof(int64_t));
+        memset(holes_index, -1, num_holes_fixed*sizeof(int));
 
         /* setup holes index */
         for (int i = 0 ; i < num_holes_fixed; i++) {
@@ -143,23 +143,24 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
                 holes_index[i] = chunk_idx;
             }
         }
-        qsort(holes_index, sizeof(int64_t), num_holes_fixed, cmp_int);
+        qsort(holes_index, sizeof(int), num_holes_fixed, cmp_int);
 
         /* copy fixed part and generating holes */
         int64_t copied_fixed_bytes = 0;
         int     fixed_hole_idx     = 0;
         char    buffer[chunksize];
-        int64_t hole_size          = 0;
+        int64_t hole_size          = fixed_holes_size / num_holes_fixed;
+        int64_t last_hole_size     = fixed_holes_size - hole_size * num_holes_fixed;
 
         for (int i = 0 ; i < num_fixed_chunk; i++) {
             fread(buffer, 1, chunksize, src);
             fwrite(buffer, 1, chunksize, tar);
             if (holes_index[fixed_hole_idx] == i) {
                 if (fixed_hole_idx != num_holes_fixed-1)
-                    hole_size = fixed_holes_size / num_holes_fixed;
+                    fseek(tar, hole_size, SEEK_CUR);
                 else
-                    hole_size = fixed_holes_size / num_holes_fixed + (fixed_holes_size%num_holes_fixed);
-                fseek(tar, hole_size, SEEK_CUR);
+                    fseek(tar, last_hole_size, SEEK_CUR);
+                fixed_hole_idx++;
             }
             copied_fixed_bytes += chunksize;
         }
@@ -222,7 +223,7 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
         int64_t read_bytes      = 0;
         int64_t available_bytes = 0;
         char    buffer[chunksize];
-        
+
         while (processed_bytes < bytes_to_write) {
             available_bytes = min(chunksize, bytes_to_write-processed_bytes);
             read_bytes = fread(buffer, 1, available_bytes, src);
