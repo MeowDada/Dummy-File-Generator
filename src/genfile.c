@@ -113,12 +113,13 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
 
     int64_t chunksize            = param->chunk_size;
     int     fixed_ratio          = param->fixed_ratio;
-    int64_t fixed_holes_size     = param->holes_size * fixed_ratio / 100;
-    int64_t non_fixed_holes_size = param->holes_size - fixed_holes_size;
     int     num_fixed_chunk      = param->fixed_part_size / chunksize;
     int     num_holes            = param->num_holes;
     int     num_holes_fixed      = fixed_ratio * num_holes / 100;
     int     num_holes_non_fixed  = num_holes - num_holes_fixed;
+    int64_t fixed_holes_size     = param->holes_size * (num_holes_fixed) / (num_holes_fixed+num_holes_non_fixed);
+    int64_t non_fixed_holes_size = param->holes_size - fixed_holes_size;
+
 
     /* determine where to append holes */
     if (num_holes_fixed > 0) {
@@ -144,9 +145,6 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
             }
         }
         qsort(holes_index, num_holes_fixed, sizeof(int), cmp_int);
-
-        for (int i = 0 ; i <  num_holes_fixed; i++)
-            printf("%d ", holes_index[i]);
 
         /* copy fixed part and generating holes */
         int64_t copied_fixed_bytes = 0;
