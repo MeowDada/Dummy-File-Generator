@@ -28,7 +28,7 @@ static int populate_data_for_fixed_part(FILE *fp, param_t *param)
     }
 
     if (param->fixed_part_size <= 0)
-        return;
+        return 0;
 
     int64_t processed_bytes = 0;
     int64_t bytes_to_write  = param->fixed_part_size;
