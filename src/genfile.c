@@ -239,13 +239,14 @@ static int do_generate_file_with_holes(param_t *param)
     }
 
     char temp_file[FILENAME_MAX];
-    char ext[] = ".tmp";
+    char ext[] = "tmp";
     if (strlen(param->filename) + strlen(ext) > FILENAME_MAX) {
         fprintf(stderr, "[ERROR]: failed to generate temp file with name exceeed FILENAME_MAX limitation\n");
         error = -1;
         goto cleanup;
     }
-
+    snprintf(temp_file, FILENAME_MAX, "%s.%s", param->filename, ext);
+    
     FILE *temp_fp = fopen(temp_file, "wb+");
     if (!temp_fp) {
         fprintf(stderr, "[ERROR]: generate_file: %s\n", strerror(errno));
