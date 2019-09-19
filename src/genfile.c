@@ -9,7 +9,7 @@
 
 static int cmp_int(const void *lhs, const void *rhs)
 {
-    return *(int *)lhs < *(int *)rhs;
+    return *(int *)lhs > *(int *)rhs;
 }
 
 static inline int64_t random_chunk_size(int64_t min, int64_t max)
