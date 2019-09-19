@@ -143,7 +143,7 @@ static int append_holes_from_temp_file_to_file(FILE *src, FILE *tar, param_t *pa
                 memcpy(&holes_index[i], &chunk_idx, sizeof(int));
             }
         }
-        qsort(holes_index, sizeof(int), num_holes_fixed, cmp_int);
+        qsort(holes_index, num_holes_fixed, sizeof(int), cmp_int);
 
         for (int i = 0 ; i <  num_holes_fixed; i++)
             printf("%d ", holes_index[i]);
