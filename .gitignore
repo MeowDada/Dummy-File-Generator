@@ -1,3 +1,4 @@
 # ignore VSCode IDE workspace
 *.code-workspace
 
+*bin
